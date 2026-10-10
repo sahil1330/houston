@@ -264,3 +264,6 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 16px; background: v
 .banners { top: calc(var(--top) + 44px); }
 .captions { top: auto; bottom: 68px; }
 .flypad, .manual { bottom: 156px; }
+
+.flymini { position: fixed; bottom: 156px; left: calc(var(--left) + (100vw - var(--left) - var(--right)) / 2); transform: translateX(-50%); z-index: 7; display: flex; align-items: center; gap: 10px; padding: 7px 14px; font: 600 10.5px var(--mono); letter-spacing: 0.1em; color: var(--cyan); border: 1px solid var(--cyan); background: rgba(4, 12, 14, 0.8); backdrop-filter: blur(10px); }
+.flymini .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); animation: blink 1s ease-in-out infinite; }

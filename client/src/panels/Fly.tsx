@@ -76,7 +76,9 @@ const FLY_KEYS = ["w", "s", "a", "d", "q", "e", "x", "arrowleft", "arrowright", 
 const TERMINAL = ["LANDED", "MISSED_ZONE", "CRASHED", "LOST"];
 
 /** Keyboard flying. Sends back-to-back 0.25 s maneuvers through the same API as everything else. */
-export function FlyPad({ onExit }: { onExit: () => void }) {
+export function FlyPad() {
+  // "Hide" only collapses the help panel; the key handlers below stay live until fly mode is switched off (K / FLY button).
+  const [collapsed, setCollapsed] = useState(false);
   const st = useStore();
   const cfg = st.config;
   const [view, setView] = useState({ throttle: 0, angle: 0, lateral: "NONE" as Lateral, armed: false });
@@ -149,6 +151,14 @@ export function FlyPad({ onExit }: { onExit: () => void }) {
     </div>
   );
   const aiFlying = st.meta?.mode === "AI";
+  if (collapsed)
+    return (
+      <div className="flymini">
+        <span className="dot" /> FLYING · {(view.throttle * 100).toFixed(0)}% · {view.angle.toFixed(0)}° {view.lateral !== "NONE" ? view.lateral : ""}
+        {aiFlying ? " · LOCKED (Claude flying)" : ""}
+        <button className="link-btn" onClick={(e) => { e.currentTarget.blur(); setCollapsed(false); }}>keys</button>
+      </div>
+    );
   const aPct = ((view.angle + cfg.maxAngleDeg) / (2 * cfg.maxAngleDeg)) * 100;
   return (
     <div className="flypad panel">
@@ -156,8 +166,8 @@ export function FlyPad({ onExit }: { onExit: () => void }) {
         <span>FLY BY KEYBOARD</span>
         <i />
         <em>
-          <button className="link-btn" onClick={onExit}>
-            close
+          <button className="link-btn" onClick={(e) => { e.currentTarget.blur(); setCollapsed(true); }}>
+            hide
           </button>
         </em>
       </header>

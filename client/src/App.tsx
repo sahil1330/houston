@@ -90,7 +90,7 @@ export function App() {
         }}
       />
       {manualOpen && <ManualPanel />}
-      {fly && !manualOpen && <FlyPad onExit={() => setFly(false)} />}
+      {fly && !manualOpen && <FlyPad />}
       <Dock />
     </div>
   );
