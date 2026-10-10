@@ -57,7 +57,8 @@ export function Briefing({ onFly }: { onFly: () => void }) {
         <button
           className="btn primary"
           disabled={!meta.agentAvailable}
-          onClick={() => {
+          onClick={(e) => {
+            e.currentTarget.blur();
             sound.unlock();
             void api.startAI();
           }}
@@ -65,7 +66,13 @@ export function Briefing({ onFly }: { onFly: () => void }) {
         >
           ▶ WATCH CLAUDE FLY IT
         </button>
-        <button className="btn" onClick={onFly}>
+        <button
+          className="btn"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onFly();
+          }}
+        >
           ✦ FLY IT YOURSELF
         </button>
         <button className="link-btn" onClick={() => setHidden(true)}>

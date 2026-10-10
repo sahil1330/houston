@@ -142,7 +142,13 @@ export function FlyPad({ onExit }: { onExit: () => void }) {
     ref.current.angle = 0;
   }, [st.resetAt]);
 
-  if (!cfg) return null;
+  if (!cfg) return (
+    <div className="flypad panel">
+      <header className="panel-h"><span>FLY BY KEYBOARD</span><i /></header>
+      <p className="fly-hint">Not connected to the HOUSTON backend, so there is nothing to fly. Check that the server is running (and VITE_API_BASE on a deployed site).</p>
+    </div>
+  );
+  const aiFlying = st.meta?.mode === "AI";
   const aPct = ((view.angle + cfg.maxAngleDeg) / (2 * cfg.maxAngleDeg)) * 100;
   return (
     <div className="flypad panel">
@@ -190,7 +196,10 @@ export function FlyPad({ onExit }: { onExit: () => void }) {
           <b />
         </div>
       </div>
-      {!view.armed && (
+      {aiFlying && (
+        <p className="fly-hint">Claude is flying this mission, so keyboard controls are locked. Press <kbd>R</kbd> to reset and take over.</p>
+      )}
+      {!aiFlying && !view.armed && (
         <p className="fly-hint">
           Press <kbd>W</kbd> to start — time only runs while you fly. Press <kbd>F</kbd> any time to kill a thruster.
         </p>
