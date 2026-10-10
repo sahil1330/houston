@@ -9,6 +9,7 @@ import type {
   Touchdown,
 } from "../../shared/types.js";
 import { scoreTouchdown, type Score } from "../../shared/score.js";
+import { API_BASE } from "./api.js";
 import { sound } from "./audio.js";
 
 export interface Caption {
@@ -150,7 +151,7 @@ class Store {
   connect() {
     if (this.started) return;
     this.started = true;
-    const es = new EventSource("/api/events");
+    const es = new EventSource(`${API_BASE}/api/events`);
     es.onopen = () => {
       this.connected = true;
       this.bump();

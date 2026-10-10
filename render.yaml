@@ -1,0 +1,16 @@
+# Render Blueprint — creates the HOUSTON backend as a Docker web service.
+services:
+  - type: web
+    name: houston-api
+    runtime: docker
+    plan: starter          # free instances sleep; the live mission lives in memory, so use an always-on plan for demos
+    healthCheckPath: /api/config
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false        # paste in the Render dashboard
+      - key: HOUSTON_PASSCODE
+        sync: false        # shared passcode required to start an AI mission
+      - key: ALLOWED_ORIGINS
+        sync: false        # your Vercel URL, e.g. https://houston-xxxx.vercel.app
+      - key: ANTHROPIC_MODEL
+        value: ""

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -84,8 +85,33 @@ function serveStatic(req: http.IncomingMessage, res: http.ServerResponse): void 
   fs.createReadStream(file).pipe(res);
 }
 
+const HOST = process.env.HOST ?? "127.0.0.1";
+const passcode = (process.env.HOUSTON_PASSCODE ?? "").trim();
+// Comma-separated list of browser origins allowed to call this API cross-origin (e.g. your Vercel URL).
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+
+function passcodeOk(req: http.IncomingMessage): boolean {
+  if (!passcode) return true;
+  const got = String(req.headers["x-houston-passcode"] ?? "");
+  const a = Buffer.from(got);
+  const b = Buffer.from(passcode);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://x");
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Houston-Passcode");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  }
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
   const route = `${req.method} ${url.pathname}`;
   try {
     if (route === "GET /api/events") {
@@ -108,6 +134,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { agentAvailable: Boolean(apiKey), model, effort, setupMessage, simSpeed });
 
     if (route === "POST /api/mission/start-ai") {
+      if (!passcodeOk(req)) return json(res, 401, { error: "Passcode required to start an AI mission." });
       const b = mission.beginAgent();
       if (!b.ok) return json(res, 409, { error: b.error });
       void runAgent(mission, b.epoch, b.signal, { apiKey, model, effort }).catch((e) =>
@@ -156,8 +183,10 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`HOUSTON backend on http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`HOUSTON backend on http://${HOST}:${PORT}`);
+  if (passcode) console.log("AI start is passcode-protected.");
+  else if (HOST !== "127.0.0.1") console.warn("WARNING: HOUSTON_PASSCODE is not set — anyone who can reach this server can start AI missions on your API key.");
   console.log(
     apiKey
       ? `Claude ready: model=${model}, effort=${effort}, sim speed=${simSpeed}x`

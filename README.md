@@ -119,3 +119,16 @@ The default model is `claude-opus-5-5` (override with `ANTHROPIC_MODEL`). Thinki
 - Single mission per server process; no persistence across restarts.
 - Live-model behaviour depends on the model and effort setting; the simulator never adjusts the outcome. Claude may fail to land, and that is a valid result.
 - The scene targets a laptop-size window (≥ ~1280 px wide).
+
+## Deploying
+
+The UI is static and can live on Vercel. **The backend cannot run on Vercel's serverless functions**: it is a single long-running process that holds the mission in memory, steps the physics on a 60 Hz timer, and streams updates over Server-Sent Events. Host it on a platform that runs a persistent container (Render, Railway, Fly.io), on an always-on plan.
+
+1. **Backend** — deploy the repo's `Dockerfile` (a `render.yaml` Blueprint is included). Set:
+   - `ANTHROPIC_API_KEY` — your key.
+   - `HOUSTON_PASSCODE` — a shared secret. Starting an AI mission requires it (the UI prompts once per tab), so strangers can't spend your API credits. Manual flying stays open.
+   - `ALLOWED_ORIGINS` — your frontend's origin, e.g. `https://houston-xxxx.vercel.app`.
+2. **Frontend** — in the Vercel project set `VITE_API_BASE=https://<your-backend-host>` (build-time) and redeploy. Build command `npm run build`, output directory `dist`.
+3. Open the Vercel URL; the top bar should show LINK in green.
+
+Notes: there is one shared mission per backend, so every visitor sees (and can reset or fault) the same lander. Reset, fault, pause and manual burns are not passcode-protected.

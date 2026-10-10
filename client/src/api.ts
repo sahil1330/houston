@@ -1,13 +1,26 @@
 import type { Action, ThrusterName } from "../../shared/types.js";
 
-async function post(path: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
+/** Backend origin. Empty in dev (Vite proxies /api); set VITE_API_BASE for a separately hosted backend. */
+export const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");
+const PASS_KEY = "houston.passcode";
+
+async function post(path: string, body?: unknown, retried = false): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(path, {
+    const pass = sessionStorage.getItem(PASS_KEY);
+    const res = await fetch(API_BASE + path, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(pass ? { "X-Houston-Passcode": pass } : {}) },
       body: JSON.stringify(body ?? {}),
     });
     if (res.ok) return { ok: true };
+    if (res.status === 401 && !retried) {
+      sessionStorage.removeItem(PASS_KEY);
+      const entered = window.prompt("Passcode to start an AI mission:");
+      if (entered) {
+        sessionStorage.setItem(PASS_KEY, entered);
+        return post(path, body, true);
+      }
+    }
     const j = (await res.json().catch(() => ({}))) as { error?: string };
     return { ok: false, error: j.error ?? `HTTP ${res.status}` };
   } catch (e) {
